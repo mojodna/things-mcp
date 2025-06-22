@@ -15,6 +15,12 @@ const DateTimeString = z
     /^\d{4}-\d{2}-\d{2}@\d{2}:\d{2}$/,
     'Invalid datetime format. Use YYYY-MM-DD@HH:MM'
   );
+const ThingsIdString = z
+  .string()
+  .regex(
+    /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i,
+    'Invalid Things ID format. Expected UUID format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'
+  );
 
 export const AddTodoSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255, 'Title too long'),
@@ -117,17 +123,17 @@ export const GetTodoDetailsSchema = z.object({
 
 // New unified JSON update schemas
 export const UpdateTodoJSONSchema = AddTodoSchema.extend({
-  id: z.string().min(1, 'Todo ID is required').describe('Unique system-generated ID of the todo to update (not the title). Use things_get_project, things_get_list, or things_search to find the correct ID first, if you don\'t have it.'),
+  id: ThingsIdString.describe('Unique system-generated UUID of the todo to update (format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX). NOT the todo title! Use things_get_project, things_get_list, or things_search to find the correct UUID first. Example: "3C5B8A1F-7D2E-4B9C-A1F3-8E5D6C4B2A7D"'),
   operation: z.literal('update').default('update')
 });
 
 export const UpdateProjectJSONSchema = AddProjectSchema.extend({
-  id: z.string().min(1, 'Project ID is required').describe('Unique system-generated ID of the project to update (not the title). Use things_get_projects or things_search to find the correct ID first, if you don\'t have it.'),
+  id: ThingsIdString.describe('Unique system-generated UUID of the project to update (format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX). NOT the project title! Use things_get_projects or things_search to find the correct UUID first. Example: "7A2E4B9C-3C5B-8A1F-A1F3-8E5D6C4B2A7D"'),
   operation: z.literal('update').default('update')
 });
 
 export const AddItemsToProjectSchema = z.object({
-  id: z.string().min(1, 'Project ID is required'),
+  id: ThingsIdString.describe('Unique system-generated UUID of the project (format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX). NOT the project title! You MUST use things_get_projects to find the correct UUID first. Example: "A1F3-8E5D-6C4B-2A7D-7A2E4B9C3C5B". Common mistake: using project name like "My Project" instead of its UUID.'),
   items: z.array(ProjectItemSchema).min(1, 'At least one item required').max(200, 'Too many items').describe('Add structured todos and headings to an existing project. Items are added as a flat array where headings act as visual separators. Todos that follow a heading will appear grouped under it. Example: [{type: \'heading\', title: \'Phase 2\'}, {type: \'todo\', title: \'Task 1\'}, {type: \'todo\', title: \'Task 2\'}].'),
   operation: z.literal('update').default('update')
 });
