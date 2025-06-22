@@ -347,7 +347,7 @@ describe('ThingsJSONBuilder', () => {
 
     it('should add complex items with proper flat structure', async () => {
       const params = {
-        id: 'A1F38E5D-6C4B-2A7D-7A2E-4B9C3C5B8A1F',
+        id: 'aBc123dEf456gHi789JkL',
         items: [
           { type: 'heading' as const, title: 'Day 1' },
           { type: 'todo' as const, title: 'Morning activity', notes: 'Early start' },
@@ -363,7 +363,7 @@ describe('ThingsJSONBuilder', () => {
         {
           type: 'project',
           operation: 'update',
-          id: 'A1F38E5D-6C4B-2A7D-7A2E-4B9C3C5B8A1F',
+          id: 'aBc123dEf456gHi789JkL',
           attributes: {
             items: [
               {

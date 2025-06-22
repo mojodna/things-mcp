@@ -48,9 +48,9 @@ describe('validateAppleScriptArg', () => {
 describe('validateThingsId', () => {
   it('should accept valid Things ID format', () => {
     const validIds = [
-      'ABC12345-1234-5678-9ABC-DEF123456789',
-      'abc12345-1234-5678-9abc-def123456789',
-      'A1B2C3D4-E5F6-7890-ABCD-EF1234567890'
+      'aBc123dEf456gHi789JkL',
+      'xYz789aBc123dEf456gHi',
+      'A1B2C3D4E5F67890ABCD'
     ];
     
     validIds.forEach(id => {
@@ -61,18 +61,20 @@ describe('validateThingsId', () => {
 
   it('should throw for invalid ID formats', () => {
     const invalidIds = [
-      'not-a-valid-id',
-      'ABC12345-1234-5678-9ABC-DEF12345678', // Too short
-      'ABC12345-1234-5678-9ABC-DEF1234567890', // Too long
-      'ABC12345-1234-5678-9ABC-DEF12345678G', // Invalid character
-      'ABC12345-1234-5678-9ABC_DEF123456789', // Underscore instead of hyphen
+      'not-a-valid-id', // Contains hyphens
+      'My Vacation Planning', // Project name with spaces
+      'My Project Name', // Contains spaces
+      'ABC12345-1234-5678-9ABC-DEF123456789', // UUID format (not Things ID)
+      'A1B2C3D4E5F67890ABCDEFGHIJKLMNOP', // Too long (32 chars)
+      'Short', // Too short
+      '35j1Briqg6XBPzPtBDwZJK!', // Contains special character
       ''
     ];
     
     invalidIds.forEach(id => {
       expect(() => validateThingsId(id))
         .toThrow(new ThingsValidationError(
-          'Invalid Things ID format. Expected format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
+          'Invalid Things ID format. Expected: alphanumeric string like "aBc123dEf456gHi789JkL" (20-24 characters). NOT the project name!',
           'id'
         ));
     });

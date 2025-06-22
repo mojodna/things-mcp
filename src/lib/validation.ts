@@ -29,12 +29,12 @@ export function validateAppleScriptArg(arg: string, fieldName: string): string {
 
 // Validate Things ID format
 export function validateThingsId(id: string): string {
-  // Things IDs are typically UUID-like
-  const idPattern = /^[A-F0-9-]{36}$/i;
+  // Things IDs are alphanumeric strings of 20-24 characters
+  const idPattern = /^[A-Za-z0-9]{20,24}$/;
   
   if (!idPattern.test(id)) {
     throw new ThingsValidationError(
-      'Invalid Things ID format. Expected format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
+      'Invalid Things ID format. Expected: alphanumeric string like "aBc123dEf456gHi789JkL" (20-24 characters). NOT the project name!',
       'id'
     );
   }
