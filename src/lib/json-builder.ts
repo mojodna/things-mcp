@@ -64,21 +64,63 @@ export class ThingsJSONBuilder {
 
   /**
    * Add items to an existing project using JSON API
+   * Note: Things JSON API doesn't support adding items via update operation,
+   * so we create new to-dos and assign them to the project
    */
   async addItemsToProject(params: AddItemsToProjectParams): Promise<string> {
-    const projectItems = this.buildProjectItems(params.items);
-    
-    const updateData = {
-      type: 'project',
-      operation: 'update',
-      id: params.id,
-      attributes: {
-        items: projectItems
-      }
+    const results = { 
+      todos: 0, 
+      headings: 0, 
+      errors: [] as string[] 
     };
     
-    await executeThingsJSON([updateData]);
-    return `✅ Added ${params.items.length} items to project successfully`;
+    // Create each item as a new to-do assigned to the project
+    for (const item of params.items) {
+      if (item.type === 'heading') {
+        results.headings++;
+        // Headings cannot be added to existing projects via JSON API
+        // Skip them with a warning (they can only be added during project creation)
+        continue;
+      }
+      
+      try {
+        // Create to-do and assign it to the project
+        const todoAttributes = this.buildFullTodo(item).attributes as Record<string, unknown>;
+        todoAttributes['list-id'] = params.id; // Assign to the project
+        
+        await executeThingsJSON([{
+          type: 'to-do',
+          attributes: todoAttributes
+        }]);
+        
+        results.todos++;
+      } catch {
+        results.errors.push(`"${item.title}"`);
+      }
+    }
+    
+    // Build detailed response message
+    let message = '';
+    
+    if (results.todos > 0) {
+      message = `✅ Added ${results.todos} todo(s) to project`;
+    }
+    
+    if (results.headings > 0) {
+      if (message) message += '\n';
+      message += `⚠️ Skipped ${results.headings} heading(s) - headings cannot be added to existing projects`;
+    }
+    
+    if (results.errors.length > 0) {
+      if (message) message += '\n';
+      message += `❌ Failed to add: ${results.errors.join(', ')}`;
+    }
+    
+    if (!message) {
+      message = '⚠️ No items were processed';
+    }
+    
+    return message;
   }
 
   /**

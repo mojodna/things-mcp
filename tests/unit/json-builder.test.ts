@@ -323,26 +323,17 @@ describe('ThingsJSONBuilder', () => {
       
       const result = await builder.addItemsToProject(params);
       
+      // Should create todo individually with list-id (headings are skipped)
       expect(mockExecuteThingsJSON).toHaveBeenCalledWith([
         {
-          type: 'project',
-          operation: 'update',
-          id: 'project-789',
+          type: 'to-do',
           attributes: {
-            items: [
-              {
-                type: 'heading',
-                attributes: { title: 'New Phase', archived: false }
-              },
-              {
-                type: 'to-do',
-                attributes: { title: 'New Task' }
-              }
-            ]
+            title: 'New Task',
+            'list-id': 'project-789'
           }
         }
       ]);
-      expect(result).toBe('✅ Added 2 items to project successfully');
+      expect(result).toBe('✅ Added 1 todo(s) to project\n⚠️ Skipped 1 heading(s) - headings cannot be added to existing projects');
     });
 
     it('should add complex items with proper flat structure', async () => {
@@ -359,38 +350,77 @@ describe('ThingsJSONBuilder', () => {
       
       const result = await builder.addItemsToProject(params);
       
-      expect(mockExecuteThingsJSON).toHaveBeenCalledWith([
+      // Should be called 3 times (once for each todo, headings are skipped)
+      expect(mockExecuteThingsJSON).toHaveBeenCalledTimes(3);
+      
+      // First todo
+      expect(mockExecuteThingsJSON).toHaveBeenNthCalledWith(1, [
         {
-          type: 'project',
-          operation: 'update',
-          id: 'aBc123dEf456gHi789JkL',
+          type: 'to-do',
           attributes: {
-            items: [
-              {
-                type: 'heading',
-                attributes: { title: 'Day 1', archived: false }
-              },
-              {
-                type: 'to-do',
-                attributes: { title: 'Morning activity', notes: 'Early start' }
-              },
-              {
-                type: 'to-do',
-                attributes: { title: 'Lunch at cafe' }
-              },
-              {
-                type: 'heading',
-                attributes: { title: 'Day 2', archived: false }
-              },
-              {
-                type: 'to-do',
-                attributes: { title: 'Museum visit', when: 'tomorrow' }
-              }
-            ]
+            title: 'Morning activity',
+            notes: 'Early start',
+            'list-id': 'aBc123dEf456gHi789JkL'
           }
         }
       ]);
-      expect(result).toBe('✅ Added 5 items to project successfully');
+      
+      // Second todo
+      expect(mockExecuteThingsJSON).toHaveBeenNthCalledWith(2, [
+        {
+          type: 'to-do',
+          attributes: {
+            title: 'Lunch at cafe',
+            'list-id': 'aBc123dEf456gHi789JkL'
+          }
+        }
+      ]);
+      
+      // Third todo
+      expect(mockExecuteThingsJSON).toHaveBeenNthCalledWith(3, [
+        {
+          type: 'to-do',
+          attributes: {
+            title: 'Museum visit',
+            when: 'tomorrow',
+            'list-id': 'aBc123dEf456gHi789JkL'
+          }
+        }
+      ]);
+      
+      expect(result).toBe('✅ Added 3 todo(s) to project\n⚠️ Skipped 2 heading(s) - headings cannot be added to existing projects');
+    });
+    
+    it('should handle only headings', async () => {
+      const params = {
+        id: 'project-789',
+        items: [
+          { type: 'heading' as const, title: 'Phase 1' },
+          { type: 'heading' as const, title: 'Phase 2' }
+        ]
+      };
+      
+      const result = await builder.addItemsToProject(params);
+      
+      expect(mockExecuteThingsJSON).not.toHaveBeenCalled();
+      expect(result).toBe('⚠️ Skipped 2 heading(s) - headings cannot be added to existing projects');
+    });
+    
+    it('should handle errors gracefully', async () => {
+      mockExecuteThingsJSON.mockRejectedValueOnce(new Error('API Error'));
+      
+      const params = {
+        id: 'project-789',
+        items: [
+          { type: 'todo' as const, title: 'Task 1' },
+          { type: 'todo' as const, title: 'Task 2' }
+        ]
+      };
+      
+      const result = await builder.addItemsToProject(params);
+      
+      expect(mockExecuteThingsJSON).toHaveBeenCalledTimes(2);
+      expect(result).toBe('✅ Added 1 todo(s) to project\n❌ Failed to add: "Task 1"');
     });
   });
 });
