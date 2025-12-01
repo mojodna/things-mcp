@@ -2,49 +2,16 @@ on run argv
     if (count of argv) < 1 then
         error "Todo ID required"
     end if
-    
+
     set todoId to item 1 of argv
-    
+
     tell application "Things3"
-        set targetTodo to missing value
-        
-        -- Search in all lists for the todo
-        set allLists to {list "Inbox", list "Today", list "Anytime", list "Upcoming", list "Someday", list "Logbook", list "Trash"}
-        
-        repeat with currentList in allLists
-            try
-                repeat with toDo in to dos of currentList
-                    if id of toDo is equal to todoId then
-                        set targetTodo to toDo
-                        exit repeat
-                    end if
-                end repeat
-                if targetTodo is not missing value then exit repeat
-            on error
-                -- Continue to next list if this one fails
-            end try
-        end repeat
-        
-        -- Also search in projects
-        if targetTodo is missing value then
-            repeat with proj in projects
-                try
-                    repeat with toDo in to dos of proj
-                        if id of toDo is equal to todoId then
-                            set targetTodo to toDo
-                            exit repeat
-                        end if
-                    end repeat
-                    if targetTodo is not missing value then exit repeat
-                on error
-                    -- Continue to next project if this one fails
-                end try
-            end repeat
-        end if
-        
-        if targetTodo is missing value then
-            error "Todo not found: " & todoId
-        end if
+        -- Use direct ID lookup - much faster than searching
+        try
+            set targetTodo to to do id todoId
+        on error errMsg
+            error "Todo not found: " & todoId & " (" & errMsg & ")"
+        end try
         
         -- Extract all details
         set todoName to name of targetTodo
