@@ -16,19 +16,13 @@ on run argv
     tell application "Things3"
         set output to ""
         set todoCount to 0
-        
-        -- Find project by ID
-        set targetProject to missing value
-        repeat with proj in projects
-            if id of proj is equal to projectId then
-                set targetProject to proj
-                exit repeat
-            end if
-        end repeat
-        
-        if targetProject is missing value then
-            error "Project not found: " & projectId
-        end if
+
+        -- Use direct project lookup - much faster than searching
+        try
+            set targetProject to project id projectId
+        on error errMsg
+            error "Project not found: " & projectId & " (" & errMsg & ")"
+        end try
         
         -- Get todos from project
         repeat with toDo in to dos of targetProject

@@ -6,18 +6,12 @@ on run argv
     set projectId to item 1 of argv
     
     tell application "Things3"
-        -- Find project by ID
-        set targetProject to missing value
-        repeat with proj in projects
-            if id of proj is equal to projectId then
-                set targetProject to proj
-                exit repeat
-            end if
-        end repeat
-        
-        if targetProject is missing value then
-            error "Project not found: " & projectId
-        end if
+        -- Use direct project lookup - much faster than searching
+        try
+            set targetProject to project id projectId
+        on error errMsg
+            error "Project not found: " & projectId & " (" & errMsg & ")"
+        end try
         
         set output to ""
         
